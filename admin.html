@@ -109,25 +109,25 @@
                     </div>
 
                     <!-- WhatsApp Input -->
-                    <div id="whatsappInputGroup" class="relative group">
+                    <div id="whatsappGroup" class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                            <span class="text-gray-500 font-medium">+91</span>
+                            <span class="text-gray-500 font-medium">whatsapp +91</span>
                         </div>
                         <input type="text" id="waNumberInput" placeholder="8828695070"
-                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-14 pr-5 py-4 focus:outline-none focus:ring-2 focus:ring-green-500/50 text-white transition-all placeholder:text-gray-700">
+                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-28 pr-5 py-4 focus:outline-none focus:ring-2 focus:ring-green-500/50 text-white transition-all placeholder:text-gray-700">
                     </div>
 
                     <!-- Telegram Input -->
-                    <div id="telegramInputGroup" class="hidden relative group">
+                    <div id="telegramGroup" class="hidden relative group">
                         <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                            <span class="text-gray-500 font-medium">@</span>
+                            <span class="text-gray-500 font-medium">tele @</span>
                         </div>
                         <input type="text" id="tgUsernameInput" placeholder="username"
-                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all placeholder:text-gray-700">
+                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-20 pr-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all placeholder:text-gray-700">
                     </div>
 
                     <!-- Custom Input -->
-                    <div id="customInputGroup" class="hidden">
+                    <div id="customGroup" class="hidden">
                         <input type="text" id="ctaLinkInput" placeholder="https://..."
                             class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-white transition-all placeholder:text-gray-700">
                     </div>
@@ -277,22 +277,24 @@
         function setCtaType(type) {
             config.ctaType = type;
 
-            // UI Toggle
-            const types = ['whatsapp', 'telegram', 'custom'];
-            types.forEach(t => {
-                const btn = document.getElementById('ctaType' + t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
-                const group = document.getElementById(t + (t === 'custom' ? '' : 'Input') + 'Group');
+            // Sync audio mode if it's whatsapp/telegram
+            if (type === 'whatsapp' || type === 'telegram') {
+                setMode(type);
+            }
 
-                if (t === type) {
-                    btn.classList.add('bg-blue-600', 'text-white');
-                    btn.classList.remove('text-gray-400');
-                    group.classList.remove('hidden');
-                } else {
-                    btn.classList.remove('bg-blue-600', 'text-white');
-                    btn.classList.add('text-gray-400');
-                    group.classList.add('hidden');
-                }
-            });
+            // UI Toggle for Buttons
+            document.getElementById('ctaTypeWhatsapp').classList.toggle('bg-blue-600', type === 'whatsapp');
+            document.getElementById('ctaTypeWhatsapp').classList.toggle('text-white', type === 'whatsapp');
+            document.getElementById('ctaTypeTelegram').classList.toggle('bg-blue-600', type === 'telegram');
+            document.getElementById('ctaTypeTelegram').classList.toggle('text-white', type === 'telegram');
+            document.getElementById('ctaTypeCustom').classList.toggle('bg-blue-600', type === 'custom');
+            document.getElementById('ctaTypeCustom').classList.toggle('text-white', type === 'custom');
+
+            // UI Toggle for Input Groups
+            document.getElementById('whatsappGroup').classList.toggle('hidden', type !== 'whatsapp');
+            document.getElementById('telegramGroup').classList.toggle('hidden', type !== 'telegram');
+            document.getElementById('customGroup').classList.toggle('hidden', type !== 'custom');
+
             updateCtaPreview();
         }
 
