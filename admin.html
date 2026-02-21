@@ -92,13 +92,47 @@
                     </div>
                 </div>
 
-                <!-- CTA Link -->
+                <!-- CTA Link Management -->
                 <div>
-                    <label for="ctaLinkInput"
-                        class="block text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">CTA Button
-                        Link</label>
-                    <input type="text" id="ctaLinkInput" placeholder="https://wa.me/..."
-                        class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all placeholder:text-gray-600">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">CTA Button
+                        Configuration</label>
+
+                    <!-- CTA Type Selector -->
+                    <div class="flex p-1 bg-white/5 rounded-xl mb-4 border border-white/10">
+                        <button onclick="setCtaType('whatsapp')" id="ctaTypeWa"
+                            class="flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300">WhatsApp</button>
+                        <button onclick="setCtaType('telegram')" id="ctaTypeTg"
+                            class="flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300">Telegram</button>
+                        <button onclick="setCtaType('custom')" id="ctaTypeCustom"
+                            class="flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300">Custom
+                            Link</button>
+                    </div>
+
+                    <!-- WhatsApp Input -->
+                    <div id="waInputGroup" class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                            <span class="text-gray-500 font-medium">+91</span>
+                        </div>
+                        <input type="text" id="waNumberInput" placeholder="8828695070"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-14 pr-5 py-4 focus:outline-none focus:ring-2 focus:ring-green-500/50 text-white transition-all placeholder:text-gray-700">
+                    </div>
+
+                    <!-- Telegram Input -->
+                    <div id="tgInputGroup" class="hidden relative group">
+                        <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                            <span class="text-gray-500 font-medium">@</span>
+                        </div>
+                        <input type="text" id="tgUsernameInput" placeholder="username"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all placeholder:text-gray-700">
+                    </div>
+
+                    <!-- Custom Input -->
+                    <div id="customInputGroup" class="hidden">
+                        <input type="text" id="ctaLinkInput" placeholder="https://..."
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-white transition-all placeholder:text-gray-700">
+                    </div>
+
+                    <p class="text-[10px] text-gray-500 mt-2 px-1" id="ctaPreview">Preview: https://wa.me/+91...</p>
                 </div>
 
                 <!-- GitHub Settings (Discreet) -->
@@ -152,7 +186,9 @@
     <script>
         let config = {
             mode: 'whatsapp',
-            ctaLink: ''
+            ctaLink: '',
+            ctaType: 'whatsapp', // Default type
+            ctaValue: ''         // Just the number or username
         };
 
         // Load existing settings
@@ -160,10 +196,44 @@
             .then(res => res.json())
             .then(data => {
                 config = data;
-                document.getElementById('ctaLinkInput').value = data.ctaLink || '';
                 updateUI(data.mode);
+
+                // Set CTA UI based on saved config or detect from link
+                if (data.ctaType) {
+                    setCtaType(data.ctaType);
+                    const id = data.ctaType === 'whatsapp' ? 'waNumberInput' :
+                        data.ctaType === 'telegram' ? 'tgUsernameInput' : 'ctaLinkInput';
+                    const el = document.getElementById(id);
+                    if (el) el.value = data.ctaValue || '';
+                } else {
+                    // Fallback: Detect type from link string
+                    detectAndSetCta(data.ctaLink);
+                }
+                updateCtaPreview();
             })
-            .catch(e => console.log("New setup detected"));
+            .catch(e => {
+                console.log("New setup detected");
+                setCtaType('whatsapp'); // Default for new setup
+            });
+
+        function detectAndSetCta(link) {
+            if (!link) {
+                setCtaType('whatsapp');
+                return;
+            }
+            if (link.includes('wa.me')) {
+                setCtaType('whatsapp');
+                const val = link.split('+91')[1] || link.split('wa.me/')[1] || '';
+                document.getElementById('waNumberInput').value = val;
+            } else if (link.includes('t.me')) {
+                setCtaType('telegram');
+                const val = link.split('t.me/')[1] || '';
+                document.getElementById('tgUsernameInput').value = val;
+            } else {
+                setCtaType('custom');
+                document.getElementById('ctaLinkInput').value = link;
+            }
+        }
 
         // Fully Automated Config: Load from local storage
         function getGHConfig() {
@@ -204,6 +274,51 @@
             updateUI(m);
         }
 
+        function setCtaType(type) {
+            config.ctaType = type;
+
+            // UI Toggle
+            const types = ['whatsapp', 'telegram', 'custom'];
+            types.forEach(t => {
+                const btn = document.getElementById('ctaType' + t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
+                const group = document.getElementById(t + (t === 'custom' ? '' : 'Input') + 'Group');
+
+                if (t === type) {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('text-gray-400');
+                    group.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('text-gray-400');
+                    group.classList.add('hidden');
+                }
+            });
+            updateCtaPreview();
+        }
+
+        function updateCtaPreview() {
+            const preview = document.getElementById('ctaPreview');
+            let finalLink = "";
+
+            if (config.ctaType === 'whatsapp') {
+                const val = document.getElementById('waNumberInput').value.trim();
+                finalLink = val ? `https://wa.me/+91${val}` : "https://wa.me/+91...";
+            } else if (config.ctaType === 'telegram') {
+                const val = document.getElementById('tgUsernameInput').value.trim();
+                finalLink = val ? `https://t.me/${val.replace('@', '')}` : "https://t.me/username";
+            } else {
+                finalLink = document.getElementById('ctaLinkInput').value.trim() || "https://...";
+            }
+
+            preview.textContent = "Preview: " + finalLink;
+            return finalLink;
+        }
+
+        // Add real-time preview listeners
+        ['waNumberInput', 'tgUsernameInput', 'ctaLinkInput'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateCtaPreview);
+        });
+
         function updateUI(m) {
             document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
             if (m === 'whatsapp') {
@@ -225,7 +340,14 @@
             icon.classList.add('hidden');
             text.textContent = 'Pushing to GitHub...';
 
-            config.ctaLink = document.getElementById('ctaLinkInput').value;
+            // Build final link
+            const finalLink = updateCtaPreview();
+            config.ctaLink = finalLink;
+
+            // Store parts for admin re-edit
+            config.ctaValue = (config.ctaType === 'whatsapp') ? document.getElementById('waNumberInput').value :
+                (config.ctaType === 'telegram') ? document.getElementById('tgUsernameInput').value :
+                    document.getElementById('ctaLinkInput').value;
 
             // Fetch current settings
             const gh = {

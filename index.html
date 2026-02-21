@@ -243,14 +243,15 @@
 
         // Fetch settings and apply dynamic content
         async function loadSettings() {
+            const audio1 = document.getElementById('audio1');
+            const audio2 = document.getElementById('audio2');
+
             try {
                 const res = await fetch('settings.json');
+                if (!res.ok) throw new Error('Settings not found');
                 const data = await res.json();
 
                 globalCtaLink = data.ctaLink || globalCtaLink;
-
-                const audio1 = document.getElementById('audio1');
-                const audio2 = document.getElementById('audio2');
 
                 if (data.mode === 'telegram') {
                     audio1.querySelector('source').src = 'audio/telegram1.mp3';
@@ -264,6 +265,11 @@
                 audio2.load();
             } catch (err) {
                 console.error('Error loading settings:', err);
+                // Fallback to default audios if they exist, or just hide loading
+                audio1.querySelector('source').src = 'audio/whatsapp1.mp3';
+                audio2.querySelector('source').src = 'audio/whatsapp2.mp3';
+                audio1.load();
+                audio2.load();
             }
         }
 
@@ -328,14 +334,29 @@
                 let audio = document.getElementById(audioId);
                 let loadingText = document.getElementById(loadingId);
 
+                if (!audio) return;
+
                 audio.oncanplaythrough = function () {
-                    loadingText.style.display = "none";
+                    if (loadingText) loadingText.style.display = "none";
                     audio.removeAttribute("disabled");
                 };
 
                 audio.onwaiting = function () {
-                    loadingText.style.display = "block";
+                    if (loadingText) loadingText.style.display = "block";
                 };
+
+                // CRITICAL: Handle load errors to prevent infinite "Loading..." state
+                audio.onerror = function () {
+                    console.error("Audio failed to load:", audioId);
+                    if (loadingText) loadingText.style.display = "none";
+                    audio.removeAttribute("disabled"); // Allow interaction even if broken
+                };
+
+                // Also check if it's already loaded or broken
+                if (audio.readyState >= 3) {
+                    if (loadingText) loadingText.style.display = "none";
+                    audio.removeAttribute("disabled");
+                }
             }
 
             checkAudioLoaded("audio1", "loading1");
