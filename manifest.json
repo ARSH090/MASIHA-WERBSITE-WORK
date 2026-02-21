@@ -1,0 +1,21 @@
+{
+    "name": "EarnSmart Admin",
+    "short_name": "EarnSmart",
+    "description": "Manage audio sets and CTA links for EarnSmart",
+    "start_url": "/admin.html",
+    "display": "standalone",
+    "background_color": "#050505",
+    "theme_color": "#3b82f6",
+    "icons": [
+        {
+            "src": "/favicon/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "/favicon/favicon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png"
+        }
+    ]
+}
